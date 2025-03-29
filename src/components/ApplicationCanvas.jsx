@@ -1,35 +1,23 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, TransformControls } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import TennisBall from "./TenisBall";
 import { useRef } from "react";
-import * as THREE from "three";
+import Plane from "./Plane";
 
 export default function ApplicationCanvas() {
   const cameraRef = useRef(null);
-  
+
   return (
     <Canvas
-      camera={{ position: [0, 2, 5] }}
+      style={{ width: "100vw", height: "400px", border: "1px solid black" }}
+      camera={{ position: [-5, 3, 2] }}
       onCreated={({ camera }) => (cameraRef.current = camera)}
     >
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={0.6} />
       <directionalLight position={[3, 5, 2]} intensity={1} />
-      <mesh
-        scale={[20, 4, 2]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-      >
-        <planeGeometry args={[10, 10]} />
-        <meshStandardMaterial color="lightgray" />
-      </mesh>
-      <TennisBall
-        camera={cameraRef}
-        parameters={{
-          size: 0.0355,
-        }}
-      />
-      <OrbitControls />
-      <TransformControls />
+      <Plane roadLength={1000} roadWidth={10} />
+      <TennisBall camera={cameraRef} />
+      <OrbitControls enableDamping={true} />
     </Canvas>
   );
 }
