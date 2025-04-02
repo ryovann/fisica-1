@@ -35,7 +35,7 @@ function movimientoUniforme({ time, velocity, position, rotation }) {
 
   position.x = displacement;
 
-  return [position, displacement, rotation];
+  return [position, displacement, velocity, rotation];
 }
 
 function movimientoRectilineoUniforme({ time, velocity, position, rotation }) {
@@ -43,7 +43,7 @@ function movimientoRectilineoUniforme({ time, velocity, position, rotation }) {
 
   position.x = displacement;
 
-  return [position, displacement, rotation];
+  return [position, displacement, velocity, rotation];
 }
 
 function movimientoRectilineoUniformementeVariado({
@@ -53,12 +53,17 @@ function movimientoRectilineoUniformementeVariado({
   deltaT,
   rotation,
 }) {
+  const previousPosition = position.clone();
+
   // deltaX = v * (deltaT) + (1/2) * a * (deltaT)^2
   const displacement = velocity * deltaT + 0.5 * acceleration * deltaT * deltaT;
 
   position.x += displacement; // rotation.x += (displacement * Math.PI) / 180; // Update X rotation based on displacement
 
-  return [position, displacement, rotation];
+  const deltaX = position.x - previousPosition.x;
+  const newVelocity = deltaX / deltaT;
+
+  return [position, position.x, newVelocity, rotation];
 }
 
 function movimientoRectilineoUniformementeVariadoVelocidadInicial({
@@ -66,15 +71,21 @@ function movimientoRectilineoUniformementeVariadoVelocidadInicial({
   acceleration,
   position,
   time,
+  deltaT,
   rotation,
 }) {
+  const previousPosition = position.clone();
+
   // deltaX = v * (deltaT) + (1/2) * a * (deltaT)^2
   const displacement =
     initialVelocity * time + 0.5 * acceleration * time * time;
 
   position.x = displacement;
 
-  return [position, displacement, rotation];
+  const deltaX = position.x - previousPosition.x;
+  const newVelocity = deltaX / deltaT;
+
+  return [position, position.x, newVelocity, rotation];
 }
 
 // Real tennis ball diameter = 6.7 cm
@@ -139,19 +150,21 @@ export default function TennisBall({ camera }) {
 
     let newPosition = prevPosition.current.clone();
     let newRotation = prevRotation.current.clone();
+    let newVelocity = velocity.current;
 
     let newDisplacement = 0;
 
     if (ballRef.current) {
       if (config.movementType == "mu") {
-        [newPosition, newDisplacement, newRotation] = movimientoUniforme({
-          velocity: config.parameters.initialVelocity,
-          position: ballRef.current.position,
-          time,
-          rotation: ballRef.current.rotation,
-        });
+        [newPosition, newDisplacement, newVelocity, newRotation] =
+          movimientoUniforme({
+            velocity: config.parameters.initialVelocity,
+            position: ballRef.current.position,
+            time,
+            rotation: ballRef.current.rotation,
+          });
       } else if (config.movementType == "mru") {
-        [newPosition, newDisplacement, newRotation] =
+        [newPosition, newDisplacement, newVelocity, newRotation] =
           movimientoRectilineoUniforme({
             velocity: config.parameters.initialVelocity,
             position: ballRef.current.position,
@@ -160,7 +173,7 @@ export default function TennisBall({ camera }) {
           });
       } else {
         if (config.parameters.useInitialVelocity) {
-          [newPosition, newDisplacement, newRotation] =
+          [newPosition, newDisplacement, newVelocity, newRotation] =
             movimientoRectilineoUniformementeVariadoVelocidadInicial({
               initialVelocity: initialVelocity.current,
               position: ballRef.current.position,
@@ -169,7 +182,7 @@ export default function TennisBall({ camera }) {
               rotation: ballRef.current.rotation,
             });
         } else {
-          [newPosition, newDisplacement, newRotation] =
+          [newPosition, newDisplacement, newVelocity, newRotation] =
             movimientoRectilineoUniformementeVariado({
               velocity: velocity.current,
               position: newPosition,
@@ -180,9 +193,7 @@ export default function TennisBall({ camera }) {
         }
       }
 
-      const deltaX = newPosition.x - prevPosition.current.x;
-
-      const newVelocity = deltaX / deltaT;
+      console.log(newVelocity);
 
       // debounce update parameters based on time
       if (time - prevTime.current > 0.1) {

@@ -116,12 +116,70 @@ const AccelerationGraph = ({ accelerationGraph }) => {
   );
 };
 
+const DisplacementGraph = ({ displacementGraph }) => {
+  const graphRef = useRef(null);
+
+  useEffect(() => {
+    if (!graphRef.current) return;
+
+    const trace1 = {
+      x: displacementGraph.x,
+      y: displacementGraph.y,
+      mode: "lines",
+      name: "Displacement",
+      line: {
+        color: "red",
+        width: 2,
+      },
+      hovertemplate: "Time: %{x}<br>Acceleration: %{y}<extra></extra>",
+    };
+
+    const layout = {
+      title: "Displacement vs. Time",
+      xaxis: {
+        title: "Time", // Ensure this is correctly spelled and within the xaxis object
+      },
+      yaxis: {
+        title: "Displacement", // Ensure this is correctly spelled and within the yaxis object
+      },
+      grid: {
+        rows: 1,
+        columns: 1,
+        pattern: "independent",
+      },
+      legend: {
+        x: 0,
+        y: 1,
+        traceorder: "normal",
+        font: {
+          family: "sans-serif",
+          size: 12,
+          color: "#000",
+        },
+        bgcolor: "#E2E2E2",
+        bordercolor: "#CCCCCC",
+        borderwidth: 2,
+      },
+    };
+
+    Plotly.newPlot(graphRef.current, [trace1], layout);
+  }, [displacementGraph.x, displacementGraph.y]);
+
+  return (
+    <div
+      ref={graphRef}
+      style={{ width: 800, height: 600 }} // Added inline styles for width and height
+    />
+  );
+};
+
 export default function Graficas() {
   const [data] = useBallStore();
 
   const history = useRef({
     velocity: { x: [], y: [] },
     acceleration: { x: [], y: [] },
+    displacement: { x: [], y: [] },
   });
 
   useEffect(() => {
@@ -154,6 +212,23 @@ export default function Graficas() {
         history.current.acceleration.x.shift();
         history.current.acceleration.y.shift();
       }
+
+      // displacement
+
+      history.current.displacement.x = [
+        ...history.current.displacement.x,
+        data.time,
+      ];
+
+      history.current.displacement.y = [
+        ...history.current.displacement.y,
+        data.displacement,
+      ];
+
+      if (history.current.displacement.x.length > 5000) {
+        history.current.displacement.x.shift();
+        history.current.displacement.y.shift();
+      }
     }
   }, [data]);
 
@@ -162,6 +237,7 @@ export default function Graficas() {
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <VelocityGraph velocityData={history.current.velocity} />
         <AccelerationGraph accelerationGraph={history.current.acceleration} />
+        <DisplacementGraph displacementGraph={history.current.displacement} />
       </div>
     </div>
   );

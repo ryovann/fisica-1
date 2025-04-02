@@ -6,12 +6,14 @@ export default function Controls() {
   const [config, setConfig] = useConfigStore();
   const [ballData] = useBallStore();
 
+  console.log("ballData", ballData);
+
   const updateObjectParameter = useCallback(
-    (propertyName, value) => {
+    (propertyName, value, defaultValue) => {
       setConfig({
         parameters: {
           ...config.parameters,
-          [propertyName]: value,
+          [propertyName]: value ?? defaultValue,
         },
       });
     },
@@ -62,11 +64,13 @@ export default function Controls() {
           id="input-acceleration"
           type="number"
           value={config.parameters.acceleration}
-          max={0.5}
-          min={0}
-          step={0.0001}
+          step={0.1}
           onChange={(event) =>
-            updateObjectParameter("acceleration", event.target.value)
+            updateObjectParameter(
+              "acceleration",
+              parseFloat(event.target.value),
+              0
+            )
           }
         />
       </div>
@@ -79,11 +83,13 @@ export default function Controls() {
           id="input-initial-velocity"
           type="number"
           value={config.parameters.initialVelocity}
-          max={0.5}
-          min={0}
-          step={0.0001}
+          step={0.1}
           onChange={(event) =>
-            updateObjectParameter("initialVelocity", event.target.value)
+            updateObjectParameter(
+              "initialVelocity",
+              parseFloat(event.target.value),
+              0
+            )
           }
         />
       </div>
@@ -124,9 +130,7 @@ export default function Controls() {
           name="input-velocity"
           id="input-velocity"
           type="number"
-          value={ballData.velocity}
-          max={0.5}
-          min={0}
+          value={ballData.velocity?.toFixed(2)}
           disabled
         />
       </div>
