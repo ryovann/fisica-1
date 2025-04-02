@@ -17,7 +17,7 @@ function createStripedTexture() {
   // Draw stripes
   const stripeWidth = size / 8; // 5 stripes
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 8; i++) {
     ctx.fillStyle = i % 2 === 0 ? "yellow" : "lime"; // Alternate colors
 
     ctx.fillRect(i * stripeWidth, 0, stripeWidth, size);
@@ -28,22 +28,22 @@ function createStripedTexture() {
   return texture;
 }
 
-function movimientoUniforme({ time, velocity, position }) {
+function movimientoUniforme({ time, velocity, position, rotation }) {
   // deltaT = tf - ti
   // deltaX = v * (deltaT)
   const displacement = velocity * time;
 
   position.x = displacement;
 
-  return [position];
+  return [position, displacement, rotation];
 }
 
-function movimientoRectilineoUniforme({ time, velocity, position }) {
+function movimientoRectilineoUniforme({ time, velocity, position, rotation }) {
   const displacement = velocity * time;
 
   position.x = displacement;
 
-  return [position];
+  return [position, displacement, rotation];
 }
 
 function movimientoRectilineoUniformementeVariado({
@@ -51,13 +51,14 @@ function movimientoRectilineoUniformementeVariado({
   acceleration,
   position,
   deltaT,
+  rotation,
 }) {
   // deltaX = v * (deltaT) + (1/2) * a * (deltaT)^2
   const displacement = velocity * deltaT + 0.5 * acceleration * deltaT * deltaT;
 
-  position.x += displacement;
+  position.x += displacement; // rotation.x += (displacement * Math.PI) / 180; // Update X rotation based on displacement
 
-  return [position, displacement];
+  return [position, displacement, rotation];
 }
 
 function movimientoRectilineoUniformementeVariadoVelocidadInicial({
@@ -65,6 +66,7 @@ function movimientoRectilineoUniformementeVariadoVelocidadInicial({
   acceleration,
   position,
   time,
+  rotation,
 }) {
   // deltaX = v * (deltaT) + (1/2) * a * (deltaT)^2
   const displacement =
@@ -72,19 +74,23 @@ function movimientoRectilineoUniformementeVariadoVelocidadInicial({
 
   position.x = displacement;
 
-  return [position, displacement];
+  return [position, displacement, rotation];
 }
 
 // Real tennis ball diameter = 6.7 cm
 // Radius = 6.7 cm / 2 = 3.35 cm (or 0.0335 meters in Three.js units)
 export default function TennisBall({ camera }) {
-  const [config, setConfig] = useConfigStore((store) => store);
-  const [ballSize, setBallConfig] = useBallStore((store) => store.size);
+  const [config] = useConfigStore((store) => store);
+  const [_, setBallConfig] = useBallStore((store) => store);
 
+  const ballSize = useRef(config.parameters.ballSize);
+  const initialPosition = useRef(config.parameters.initialPosition);
+  const initialRotation = useRef(config.parameters.initialRotation);
   const initialVelocity = useRef(config.parameters.initialVelocity);
 
   const prevTime = useRef(0);
-  const prevPosition = useRef(new THREE.Vector3(0, 0, 0));
+  const prevPosition = useRef(initialPosition.current.clone());
+  const prevRotation = useRef(initialRotation.current.clone());
   const velocity = useRef(config.parameters.initialVelocity);
   const displacement = useRef(0);
 
@@ -132,38 +138,44 @@ export default function TennisBall({ camera }) {
     const deltaT = time - prevTime.current;
 
     let newPosition = prevPosition.current.clone();
+    let newRotation = prevRotation.current.clone();
 
     let newDisplacement = 0;
 
     if (ballRef.current) {
       if (config.movementType == "mu") {
-        [newPosition, newDisplacement] = movimientoUniforme({
+        [newPosition, newDisplacement, newRotation] = movimientoUniforme({
           velocity: config.parameters.initialVelocity,
           position: ballRef.current.position,
           time,
+          rotation: ballRef.current.rotation,
         });
       } else if (config.movementType == "mru") {
-        [newPosition, newDisplacement] = movimientoRectilineoUniforme({
-          velocity: config.parameters.initialVelocity,
-          position: ballRef.current.position,
-          time,
-        });
+        [newPosition, newDisplacement, newRotation] =
+          movimientoRectilineoUniforme({
+            velocity: config.parameters.initialVelocity,
+            position: ballRef.current.position,
+            time,
+            rotation: ballRef.current.rotation,
+          });
       } else {
         if (config.parameters.useInitialVelocity) {
-          [newPosition, newDisplacement] =
+          [newPosition, newDisplacement, newRotation] =
             movimientoRectilineoUniformementeVariadoVelocidadInicial({
               initialVelocity: initialVelocity.current,
               position: ballRef.current.position,
               acceleration: config.parameters.acceleration,
               time,
+              rotation: ballRef.current.rotation,
             });
         } else {
-          [newPosition, newDisplacement] =
+          [newPosition, newDisplacement, newRotation] =
             movimientoRectilineoUniformementeVariado({
               velocity: velocity.current,
               position: newPosition,
               acceleration: config.parameters.acceleration,
               deltaT: deltaT,
+              rotation: ballRef.current.rotation,
             });
         }
       }
@@ -186,13 +198,26 @@ export default function TennisBall({ camera }) {
       // Update the ball position
       updateBallPosition({
         position: newPosition,
+        rotation: newRotation,
       });
     }
   });
 
   return (
-    <mesh ref={ballRef} position={[0, ballSize, 0]} rotation={[0, 0, 0]}>
-      <sphereGeometry args={[ballSize, 32, 32]} />
+    <mesh
+      ref={ballRef}
+      position={[
+        initialPosition.current.x,
+        initialPosition.current.y,
+        initialPosition.current.z,
+      ]}
+      rotation={[
+        initialRotation.current.x,
+        initialRotation.current.y,
+        initialRotation.current.z,
+      ]}
+    >
+      <sphereGeometry args={[ballSize.current, 32, 32]} />
       <meshStandardMaterial color="white" />
       {/* Create stripes using a texture */}
       <meshStandardMaterial map={createStripedTexture()} />

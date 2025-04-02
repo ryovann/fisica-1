@@ -13,7 +13,7 @@ export default function ApplicationCanvas() {
       camera={{ position: [-5, 3, 2] }}
       onCreated={({ camera }) => (cameraRef.current = camera)}
     >
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={1} />
       <directionalLight position={[3, 5, 2]} intensity={1} />
       <Plane roadLength={1000} roadWidth={10} />
       <TennisBall camera={cameraRef} />

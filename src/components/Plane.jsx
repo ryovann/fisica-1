@@ -41,7 +41,7 @@ function RoadLines({ roadLength = 50, roadWidth = 10 }) {
   const yellowLineColor = "yellow";
   const yellowLineLength = 1;
 
-  const yellowLineCount = roadLength;
+  const yellowLineCount = roadLength / 3;
 
   return (
     <>
