@@ -1,13 +1,21 @@
-import './App.css'
+import "./App.css";
 
-import MainCanvas from './components/Canvas';
+import ApplicationCanvas from "./components/ApplicationCanvas";
+import Controls from "./components/Controls";
+import Graficas from "./components/Graficas";
+import ConfigStoreProvider from "./store/config.store";
+import BallStoreProvider from "./store/ball.store";
 
 function App() {
   return (
-    <div>
-      <MainCanvas />
-    </div>
-  )
+    <ConfigStoreProvider>
+      <BallStoreProvider>
+        <ApplicationCanvas color="red" />
+        <Controls />
+        <Graficas />
+      </BallStoreProvider>
+    </ConfigStoreProvider>
+  );
 }
 
-export default App
+export default App;
