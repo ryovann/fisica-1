@@ -7,9 +7,9 @@ function Road({ roadLength = 50, roadWidth = 10 }) {
   const [roadAlbedoMap, roadNormalMap, roadRoughnessMap] = useLoader(
     THREE.TextureLoader,
     [
-      "/textures/asphalt_02_diff_1k.png",
-      "/textures/asphalt_02_nor_gl_1k.png",
-      "/textures/asphalt_02_rough_1k.png",
+      "textures/asphalt_02_diff_1k.png",
+      "textures/asphalt_02_nor_gl_1k.png",
+      "textures/asphalt_02_rough_1k.png",
     ]
   );
 
